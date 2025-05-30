@@ -320,49 +320,49 @@ from statsmodels.tsa.arima.model import ARIMA
 
 
 # --- Tab 3: Forecast ---
+# ─── Forecast tab (tabs[3]) ───────────────────────────────────────────────
 with tabs[3]:
-    st.subheader("🔮 4-Quarter Crime Rate Forecast ")
-    st.markdown("Crime Rate Forecast in Colchester")
+    st.markdown("## 🔮 4-Quarter Crime Rate Forecast (from combined_df)")
+    st.markdown("### Crime Rate Forecast in Colchester")
 
-    # 1) Prepare the time series
-    ts_df = combined_df[["Quarter_str", "Crimes per 1000"]].copy()
-    ts_df["Quarter_dt"] = pd.to_datetime(
-        ts_df["Quarter_str"]
-            .str.replace("Q1", "01")
-            .str.replace("Q2", "04")
-            .str.replace("Q3", "07")
-            .str.replace("Q4", "10"),
-        format="%m %Y"
+    # build the time series exactly as in your analysis
+    crime_ts = combined_df[["Quarter_str", "Crimes per 1000"]].copy()
+    crime_ts["Quarter_dt"] = pd.to_datetime(
+        crime_ts["Quarter_str"]
+        .str.replace("Q1 ", "01-")
+        .str.replace("Q2 ", "04-")
+        .str.replace("Q3 ", "07-")
+        .str.replace("Q4 ", "10-"),
+        format="%m-%Y",
     )
-    ts_df.set_index("Quarter_dt", inplace=True)
-    ts = ts_df["Crimes per 1000"].sort_index()
+    crime_ts = crime_ts.set_index("Quarter_dt").sort_index()["Crimes per 1000"]
 
-    # 2) Fit ARIMA(1,1,1)
-    model = ARIMA(ts, order=(1, 1, 1))
+    # fit ARIMA(1,1,1)
+    from statsmodels.tsa.arima.model import ARIMA
+    model = ARIMA(crime_ts, order=(1, 1, 1))
     model_fit = model.fit()
+
+    # forecast next 4 quarters
     forecast_steps = 4
     forecast = model_fit.forecast(steps=forecast_steps)
 
-    # 3) Build future date index (quarterly)
-    last_date = ts.index[-1]
-    future_dates = pd.date_range(
-        start=last_date + pd.offsets.QuarterBegin(),
-        periods=forecast_steps,
-        freq="Q"
+    # build future-dates index
+    last = crime_ts.index[-1]
+    future_idx = pd.date_range(
+        start=last + pd.offsets.QuarterBegin(), periods=forecast_steps, freq="Q"
     )
 
-    # 4) Plot with Matplotlib
+    # now plot with matplotlib
+    import matplotlib.pyplot as plt
+
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(ts.index, ts.values, marker="o", label="Observed", color="#1f77b4")
-    ax.plot(future_dates, forecast.values,
-            marker="s", label="Forecast", color="crimson")
+    ax.plot(crime_ts.index, crime_ts.values, "-o", label="Observed")
+    ax.plot(future_idx, forecast.values, "-s", color="crimson", label="Forecast")
+    ax.set_title("Crime Rate Forecast in Colchester")
     ax.set_xlabel("Quarter")
     ax.set_ylabel("Crimes per 1000 Residents")
-    ax.set_title("Crime Rate Forecast in Colchester")
     ax.legend()
     ax.grid(True)
-    plt.tight_layout()
 
-    # 5) Show in Streamlit
+    # hand it off to Streamlit
     st.pyplot(fig)
-
