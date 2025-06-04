@@ -323,7 +323,7 @@ from statsmodels.tsa.arima.model import ARIMA
 
 # Inside your “🔮 Forecast” tab block:
 with tabs[3]:
-    st.header("🔮 4-Quarter Crime Rate Forecast (from combined_df)")
+    st.header("🔮 4-Quarter Crime Rate Forecast")
     st.subheader("Crime Rate Forecast in Colchester")
 
     # 1) Prepare the time series (this is roughly what you probably already have)
