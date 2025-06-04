@@ -319,50 +319,48 @@ import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 
 
-# --- Tab 3: Forecast ---
-# ─── Forecast tab (tabs[3]) ───────────────────────────────────────────────
+# ─── ... earlier code (loading data, tabs, etc.) ─────────────────────────────────────
+
+# Inside your “🔮 Forecast” tab block:
 with tabs[3]:
-    st.markdown("## 🔮 4-Quarter Crime Rate Forecast")
-    st.markdown("### Crime Rate Forecast in Colchester")
+    st.header("🔮 4-Quarter Crime Rate Forecast (from combined_df)")
+    st.subheader("Crime Rate Forecast in Colchester")
 
-    # build the time series exactly as in your analysis
-    crime_ts = combined_df[["Quarter_str", "Crimes per 1000"]].copy()
-    crime_ts["Quarter_dt"] = pd.to_datetime(
-        crime_ts["Quarter_str"]
-        .str.replace("Q1 ", "01-")
-        .str.replace("Q2 ", "04-")
-        .str.replace("Q3 ", "07-")
-        .str.replace("Q4 ", "10-"),
-        format="%m-%Y",
-    )
-    crime_ts = crime_ts.set_index("Quarter_dt").sort_index()["Crimes per 1000"]
+    # 1) Prepare the time series (this is roughly what you probably already have)
+    crime_ts = combined_df[["Quarter_dt", "Crimes per 1000"]].copy()
+    crime_ts = crime_ts.rename(columns={"Quarter_dt": "Date"}).set_index("Date").sort_index()
+    series = crime_ts["Crimes per 1000"]
 
-    # fit ARIMA(1,1,1)
+    # 2) Fit your ARIMA or other forecast model (example from your code)
     from statsmodels.tsa.arima.model import ARIMA
-    model = ARIMA(crime_ts, order=(1, 1, 1))
+    model = ARIMA(series, order=(1, 1, 1))
     model_fit = model.fit()
+    forecast_values = model_fit.forecast(steps=4)
 
-    # forecast next 4 quarters
-    forecast_steps = 4
-    forecast = model_fit.forecast(steps=forecast_steps)
-
-    # build future-dates index
-    last = crime_ts.index[-1]
-    future_idx = pd.date_range(
-        start=last + pd.offsets.QuarterBegin(), periods=forecast_steps, freq="Q"
+    # 3) Build the Matplotlib figure explicitly
+    last_date = series.index[-1]
+    future_dates = pd.date_range(
+        start=last_date + pd.offsets.QuarterBegin(), periods=4, freq="Q"
     )
-
-    # now plot with matplotlib
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(crime_ts.index, crime_ts.values, "-o", label="Observed")
-    ax.plot(future_idx, forecast.values, "-s", color="crimson", label="Forecast")
-    ax.set_title("Crime Rate Forecast in Colchester")
+    ax.plot(series.index, series.values, label="Observed", marker="o", color="tab:blue")
+    ax.plot(future_dates, forecast_values, label="Forecast", marker="s", color="tab:red")
     ax.set_xlabel("Quarter")
     ax.set_ylabel("Crimes per 1000 Residents")
+    ax.set_title("Crime Rate Forecast in Colchester")
     ax.legend()
     ax.grid(True)
+    fig.tight_layout()
 
-    # hand it off to Streamlit
+    # 4) Tell Streamlit to render that figure
     st.pyplot(fig)
+
+    # Optionally, you can display the forecast values as a table below:
+    forecast_df = pd.DataFrame({
+        "Quarter": future_dates,
+        "Forecast (Crimes per 1000)": forecast_values.values
+    })
+    forecast_df["Quarter"] = forecast_df["Quarter"].dt.to_period("Q").astype(str)
+    st.table(forecast_df)
+
