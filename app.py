@@ -322,7 +322,7 @@ from statsmodels.tsa.arima.model import ARIMA
 # --- Tab 3: Forecast ---
 # ─── Forecast tab (tabs[3]) ───────────────────────────────────────────────
 with tabs[3]:
-    st.markdown("## 🔮 4-Quarter Crime Rate Forecast (from combined_df)")
+    st.markdown("## 🔮 4-Quarter Crime Rate Forecast")
     st.markdown("### Crime Rate Forecast in Colchester")
 
     # build the time series exactly as in your analysis
